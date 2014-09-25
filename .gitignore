@@ -1,1 +1,7 @@
+# node modules
+
 server/node_modules
+
+# sqlite files
+
+server/data
