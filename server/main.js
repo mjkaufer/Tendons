@@ -25,6 +25,8 @@ var upsert = db.prepare("INSERT INTO users "
 	+ "FROM users "
 	+ "WHERE user = ?);");//inserts user with perm 1
 
+var toggle = db.prepare("UPDATE users SET status = (status + 1) % 2 WHERE user = ?");
+
 
 // api.post('/data/:user/:method/:estimoteUUID', function(req, res){
 api.post('/data/:user/:method', function(req, res){
@@ -33,15 +35,10 @@ api.post('/data/:user/:method', function(req, res){
 	// 	return;to be implemented later to verify that they're at the estimote, even though it's not the best verif
 
 	if(req.params.method.toLowerCase() == "locationchange")//mod status from 1 to 0
-	    db.run("UPDATE users SET status = (status + 1) % 2 WHERE user = " + req.params.user.toLowerCase(), function(err, row){//switches from 1 to 0 - 1 is in so default will be 1
-	        if (err){
-	            console.err(err);
-	            res.status(500);
-	        }
-	        else {
-	            res.status(202);
-	        }
-	        res.end();
+	    toggle.run(req.params.user.toLowerCase(), function(e, row){//switches from 1 to 0 - 1 is in so default will be 1
+			res.status(202);//err keeps throwing errs
+	        
+	        res.end("Updated");
 	    });
 	else if(req.params.method.toLowerCase() == "create"){
 		runUpsert(req.params.user.toLowerCase());
