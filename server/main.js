@@ -32,7 +32,7 @@ api.post('/data/:user/:method', function(req, res){
 	// if(req.params.estimoteUUID != estimoteUUID)
 	// 	return;to be implemented later to verify that they're at the estimote, even though it's not the best verif
 
-	if(req.params.method.toLowerCase() == "locationChange")//mod status from 1 to 0
+	if(req.params.method.toLowerCase() == "locationchange")//mod status from 1 to 0
 	    db.run("UPDATE users SET status = (status + 1) % 2 WHERE user = " + req.params.user.toLowerCase(), function(err, row){//switches from 1 to 0 - 1 is in so default will be 1
 	        if (err){
 	            console.err(err);
@@ -48,8 +48,17 @@ api.post('/data/:user/:method', function(req, res){
 		res.status(200);
 		res.end("Added user");
 	}
+	else{
+		res.status(404);
+		res.end("Not found");
+	}
 
 });
+
+api.get('/', function(req, res){
+	res.status(200);
+	res.end("Nothing here.");
+})
 
 
 api.get('/data/users', function(req, res){
