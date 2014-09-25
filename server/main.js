@@ -72,7 +72,7 @@ api.get('/data/users', function(req, res){
 			ret += "]}";
 
 			res.status(200);
-			res.end(ret + "\ndone");
+			res.end(ret);
 		}
 		
 	});
