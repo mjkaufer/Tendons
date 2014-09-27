@@ -22,6 +22,7 @@ import android.widget.Toast;
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
+import com.estimote.sdk.connection.BeaconConnection;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestHandle;
@@ -45,9 +46,13 @@ public class Main extends Activity {
             ESTIMOTE_PROXIMITY_UUID =
             "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
 
+    private static final int major = 3289;
+
+
+
     private static final Region ALL_ESTIMOTE_BEACONS =
             new Region("regionId", ESTIMOTE_PROXIMITY_UUID,
-                    null, null);
+                    major, null);
 
     protected static final String TAG =
             "Estimote Beacon";
@@ -68,9 +73,12 @@ public class Main extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        Log.i("Main", "Started");
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        System.out.println("Start");
         settings = this.getSharedPreferences("TendonAccountCreated", 0);
         editor = settings.edit();
 
@@ -92,6 +100,8 @@ public class Main extends Activity {
         beaconManager.setMonitoringListener(new BeaconManager.MonitoringListener() {
             @Override
             public void onEnteredRegion(Region region, List<Beacon> beacons) {
+
+//                ((TextView)(findViewById(R.id.uuid))).setText(region.getProximityUUID());
                 if (isAppInForeground(
                         getApplicationContext())) {
                     toastAlert("Entered region");
@@ -109,6 +119,7 @@ public class Main extends Activity {
 
             @Override
             public void onExitedRegion(Region region) {
+
                 if (isAppInForeground(
                         getApplicationContext())) {
                     toastAlert("Exited region");
