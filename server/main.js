@@ -25,7 +25,16 @@ var upsert = db.prepare("INSERT INTO users "
 	+ "FROM users "
 	+ "WHERE user = ?);");//inserts user with perm 1
 
+/*
+	DETAILS
+	1 MEANS OUTSIDE
+	0 MEANS INSIDE
+*/
+
+
 var toggle = db.prepare("UPDATE users SET status = (status + 1) % 2 WHERE user = ?");
+var enter = db.prepare("UPDATE users SET status = 0 WHERE user = ?");
+var exit = db.prepare("UPDATE users SET status = 1 WHERE user = ?");
 
 
 // api.post('/data/:user/:method/:estimoteUUID', function(req, res){
@@ -35,15 +44,27 @@ api.post('/data/:user/:method', function(req, res){
 	// 	return;to be implemented later to verify that they're at the estimote, even though it's not the best verif
 
 	if(req.params.method.toLowerCase() == "locationchange")//mod status from 1 to 0
-	    toggle.run(req.params.user.toLowerCase(), function(e, row){//switches from 1 to 0 - 1 is in so default will be 1
+	    toggle.run(req.params.user.toLowerCase(), function(e, row){//switches from 1 to 0 - 1 is out so default will be 1
 			res.status(202);//err keeps throwing errs
 	        
-	        res.end("Updated");
+	        res.end("Updated - toggled");
 	    });
 	else if(req.params.method.toLowerCase() == "create"){
 		runUpsert(req.params.user.toLowerCase());
 		res.status(200);
-		res.end("Added user");
+		res.end("Added user " + req.params.user.toLowerCase());
+	}
+	else if(req.params.method.toLowerCase() == "enter"){//set status to 0, as the user is now inside
+		enter.run(req.params.user.toLowerCase(), function(e,row){
+			res.status(202);
+			res.end("Updated - inside");
+		})
+	}
+	else if(req.params.method.toLowerCase() == "leave"){//set status to 1, as the user is now outside
+		exit.run(req.params.user.toLowerCase(), function(e,row){
+			res.status(202);
+			res.end("Updated - outside");
+		})
 	}
 	else{
 		res.status(404);
