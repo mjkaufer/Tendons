@@ -1,1 +1,1 @@
-include ':app', ':estimote-sdk-preview'
+include ':app', ':estimote-sdk-preview', ':android-async-http-1.4.6'

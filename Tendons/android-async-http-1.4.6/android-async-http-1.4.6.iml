@@ -3,7 +3,7 @@
   <component name="FacetManager">
     <facet type="android-gradle" name="Android-Gradle">
       <configuration>
-        <option name="GRADLE_PROJECT_PATH" value=":estimote-sdk-preview" />
+        <option name="GRADLE_PROJECT_PATH" value=":android-async-http-1.4.6" />
       </configuration>
     </facet>
     <facet type="java-gradle" name="Java-Gradle">
