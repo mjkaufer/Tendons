@@ -1,5 +1,7 @@
 package org.kaufer.matthew.tendons;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
@@ -7,8 +9,10 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,7 +22,13 @@ import android.widget.Toast;
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestHandle;
 
+import org.apache.http.Header;
+
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -43,11 +53,35 @@ public class Main extends Activity {
             "Estimote Beacon";
 
     private final int NID = 1;
+
+    private String serverURL = "http://mjkaufer-server.jit.su/";
+
+    TelephonyManager telephonyManager;
+
+    public String username;
+    private AsyncHttpClient client = new AsyncHttpClient();
+    SharedPreferences settings;
+    SharedPreferences.Editor editor;
+    private String likely = " Check your connection.";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        settings = this.getSharedPreferences("TendonAccountCreated", 0);
+        editor = settings.edit();
+
+        if(!settings.getBoolean("hasAccount", false)){//either no account or no var defined
+            makeAccount();
+        }
+
         final TextView textView = (TextView) findViewById(R.id.textView2);
+        telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+        username = getUsername();
+
 
 
         beaconManager = new BeaconManager(this);
@@ -60,17 +94,16 @@ public class Main extends Activity {
             public void onEnteredRegion(Region region, List<Beacon> beacons) {
                 if (isAppInForeground(
                         getApplicationContext())) {
-                    Toast.makeText(
-                            getApplicationContext(),
-                            "Entered region",
-                            Toast.LENGTH_LONG).show();
+                    toastAlert("Entered region");
 
-                    textView.setText("YOU ARE NEAR DAT BEACON");
+                    textView.setText("In the region!");
                 } else {
-                    postNotification("Entered region");
+                    postNotification("In the region!");
                 }
-
+                enter();
                 System.out.println("ENTER");
+                //now we need to post that we're in the room
+
 
             }
 
@@ -78,17 +111,16 @@ public class Main extends Activity {
             public void onExitedRegion(Region region) {
                 if (isAppInForeground(
                         getApplicationContext())) {
-                    Toast.makeText(
-                            getApplicationContext(),
-                            "Exited region",
-                            Toast.LENGTH_LONG).show();
-                    textView.setText("YOU ARE NOT NEAR DAT BEACON");
+                    toastAlert("Exited region");
+                    textView.setText("Out of the region!");
 
                 } else {
-                    postNotification("Exited region");
+                    postNotification("Out of the region!");
                 }
-
+                exit();
                 System.out.println("LEAVE");
+                //now we need to post that we're out of the room
+
             }
         });
 
@@ -98,6 +130,7 @@ public class Main extends Activity {
         Intent notifyIntent = new
                 Intent(Main.this,
                 Main.class);
+
 
         notifyIntent.setFlags(
                 Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -114,7 +147,7 @@ public class Main extends Activity {
                 .setContentText(msg)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
-                .build();
+                .getNotification();
         notification.defaults |=
                 Notification.DEFAULT_SOUND;
         notification.defaults |=
@@ -187,4 +220,86 @@ public class Main extends Activity {
         notificationManager.cancel(NID);
         beaconManager.disconnect();
     }
+
+    public String getUsername(){
+        AccountManager manager = AccountManager.get(this);
+        Account[] accounts = manager.getAccountsByType("com.google");
+        List<String> possibleEmails = new LinkedList<String>();
+
+        for (Account account : accounts) {
+            possibleEmails.add(account.name);
+        }
+
+        if(!possibleEmails.isEmpty() && possibleEmails.get(0) != null){
+            String email = possibleEmails.get(0);
+            String[] parts = email.split("@");
+            if(parts.length > 0 && parts[0] != null)
+                return parts[0];
+            else
+                return telephonyManager.getDeviceId();// an individual ID if the username thing doesn't work out
+        }else
+            return telephonyManager.getDeviceId();
+    }
+
+    public RequestHandle enter(){//we should probably add some offline support where enter/exit is tracked locally and pushed when connection is restored
+        if(!settings.getBoolean("hasAccount",false)){//don't have an account
+            return null;//don't do anything - don't want to be modifying imaginary sql rows
+        }
+        return client.post(serverURL + "data/enter/" + username, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                //we don't really need to do anything
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                toastAlert("Entry post failed..." + likely);
+            }
+        });
+    }
+
+    public RequestHandle exit(){
+        if(!settings.getBoolean("hasAccount",false)){
+            return null;
+        }
+        return client.post(serverURL + "data/leave/" + username, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                toastAlert("Exit post failed..." + likely);
+                System.out.println(new String(bytes));
+            }
+        });
+    }
+
+    public RequestHandle makeAccount(){
+
+        return client.post(serverURL + "data/create/" + username, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                toastAlert("Account created!");
+                editor.putBoolean("hasAccount",true);
+                editor.commit();
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                toastAlert("Account creation failed." + likely);
+                editor.putBoolean("hasAccount",false);
+                editor.commit();
+            }
+        });
+    }
+
+    public void toastAlert(String s, int duration){
+        Toast.makeText(getApplicationContext(),s,duration).show();
+    }
+
+    public void toastAlert(String s){
+        Toast.makeText(getApplicationContext(),s,Toast.LENGTH_SHORT).show();
+    }
+
 }
