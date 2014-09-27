@@ -38,7 +38,7 @@ var exit = db.prepare("UPDATE users SET status = 1 WHERE user = ?");
 
 
 // api.post('/data/:user/:method/:estimoteUUID', function(req, res){
-api.post('/data/:user/:method', function(req, res){
+api.post('/data/:method/:user', function(req, res){
 
 	// if(req.params.estimoteUUID != estimoteUUID)
 	// 	return;to be implemented later to verify that they're at the estimote, even though it's not the best verif

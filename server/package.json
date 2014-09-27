@@ -1,6 +1,6 @@
 {
   "name": "CheckinServer",
-  "version": "0.0.1-4",
+  "version": "0.0.1-5",
   "description": "Checkin with Estimote!",
   "main": "main.js",
   "scripts": {
