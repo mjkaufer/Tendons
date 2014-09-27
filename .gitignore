@@ -5,3 +5,7 @@ server/node_modules
 # sqlite files
 
 server/data
+
+# android key
+
+Tendons/keys
