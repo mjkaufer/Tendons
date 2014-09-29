@@ -16,8 +16,10 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.os.Vibrator;
 
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
@@ -60,6 +62,7 @@ public class Main extends Activity {
     private final int NID = 1;
 
     private String serverURL = "http://mjkaufer-server.jit.su/";
+    private Vibrator vibrator;
 
     TelephonyManager telephonyManager;
 
@@ -68,7 +71,9 @@ public class Main extends Activity {
     SharedPreferences settings;
     SharedPreferences.Editor editor;
     private String likely = " Check your connection.";
-
+    private Button button;
+    private long vibTime = 250;
+    private long[] exitPattern  = {0, vibTime, vibTime, vibTime, vibTime};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +95,9 @@ public class Main extends Activity {
         telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
         username = getUsername();
 
+        button = findViewById(R.id.button);
+
+        vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
 
 
         beaconManager = new BeaconManager(this);
@@ -112,6 +120,7 @@ public class Main extends Activity {
                 }
                 enter();
                 System.out.println("ENTER");
+                vibrator.vibrate(vibTime);
                 //now we need to post that we're in the room
 
 
@@ -130,6 +139,7 @@ public class Main extends Activity {
                 }
                 exit();
                 System.out.println("LEAVE");
+                vibrator.vibrate(exitPattern, -1);//makes a double vibrate on exit
                 //now we need to post that we're out of the room
 
             }
