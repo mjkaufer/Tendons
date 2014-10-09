@@ -84,16 +84,14 @@ api.get('/data/users', function(req, res){
 
 	db.each("SELECT * FROM users", function(err, row) {
 		if(row.status != -1){//apparently the upsert code only works if there's something already in the DB, so we'll have a thing with a val of -1
-			console.log("{user:" + row.user + ", status:" + row.status + "}");
-			ret+="{user:'" + row.user + "', status:" + row.status + "}";
-
-			ret += "]}";
-
-			res.status(200);
-			res.end(ret);
+			ret+="{'user':'" + row.user + "', 'status':" + row.status + "}";
 		}
-		
 	});
+	
+	ret += "]}";
+	
+	res.status(200);
+	res.end(ret);
 
 });
 
