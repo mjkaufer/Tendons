@@ -17,6 +17,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -82,8 +84,12 @@ public class Main extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
 
         Log.i("Main", "Started");
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
+        //Remove notification bar
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        //set content view AFTER ABOVE sequence (to avoid crash)
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         System.out.println("Start");
@@ -99,6 +105,7 @@ public class Main extends Activity {
         username = getUsername();
 
         button = (Button)findViewById(R.id.button);
+        button.setEnabled(false);
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,11 +126,13 @@ public class Main extends Activity {
             @Override
             public void onEnteredRegion(Region region, List<Beacon> beacons) {
                 beacon = beacons.get(0);
+                button.setEnabled(true);
+                calculateDistance();
+
 //                ((TextView)(findViewById(R.id.uuid))).setText(region.getProximityUUID());
                 if (isAppInForeground(
                         getApplicationContext())) {
                     toastAlert("Entered region");
-                    calculateDistance();
                     textView.setText("In the region!");
                 } else {
                     postNotification("In the region!");
@@ -139,6 +148,7 @@ public class Main extends Activity {
             @Override
             public void onExitedRegion(Region region) {
                 beacon = null;
+                button.setEnabled(false);
                 if (isAppInForeground(
                         getApplicationContext())) {
                     toastAlert("Exited region");
