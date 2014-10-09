@@ -16,6 +16,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +25,7 @@ import android.os.Vibrator;
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
+import com.estimote.sdk.Utils;
 import com.estimote.sdk.connection.BeaconConnection;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -72,6 +74,7 @@ public class Main extends Activity {
     SharedPreferences.Editor editor;
     private String likely = " Check your connection.";
     private Button button;
+    private Beacon beacon;//set to null when no beacon
     private long vibTime = 250;
     private long[] exitPattern  = {0, vibTime, vibTime, vibTime, vibTime};
 
@@ -95,7 +98,19 @@ public class Main extends Activity {
         telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
         username = getUsername();
 
-        button = findViewById(R.id.button);
+        button = (Button)findViewById(R.id.button);
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                TextView distance = (TextView)findViewById(R.id.textView3);
+                if(beacon==null)
+                    distance.setText("Not near a beacon");
+                else
+                    distance.setText("Approximately " + Utils.computeAccuracy(beacon) + " meters from the beacon.");
+
+            }
+        });
 
         vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -108,7 +123,7 @@ public class Main extends Activity {
         beaconManager.setMonitoringListener(new BeaconManager.MonitoringListener() {
             @Override
             public void onEnteredRegion(Region region, List<Beacon> beacons) {
-
+                beacon = beacons.get(0);
 //                ((TextView)(findViewById(R.id.uuid))).setText(region.getProximityUUID());
                 if (isAppInForeground(
                         getApplicationContext())) {
@@ -128,7 +143,7 @@ public class Main extends Activity {
 
             @Override
             public void onExitedRegion(Region region) {
-
+                beacon = null;
                 if (isAppInForeground(
                         getApplicationContext())) {
                     toastAlert("Exited region");
