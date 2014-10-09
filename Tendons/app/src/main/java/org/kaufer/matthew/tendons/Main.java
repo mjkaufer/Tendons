@@ -103,12 +103,7 @@ public class Main extends Activity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                TextView distance = (TextView)findViewById(R.id.textView3);
-                if(beacon==null)
-                    distance.setText("Not near a beacon");
-                else
-                    distance.setText("Approximately " + Utils.computeAccuracy(beacon) + " meters from the beacon.");
-
+                calculateDistance();
             }
         });
 
@@ -128,7 +123,7 @@ public class Main extends Activity {
                 if (isAppInForeground(
                         getApplicationContext())) {
                     toastAlert("Entered region");
-
+                    calculateDistance();
                     textView.setText("In the region!");
                 } else {
                     postNotification("In the region!");
@@ -255,6 +250,14 @@ public class Main extends Activity {
 
         notificationManager.cancel(NID);
         beaconManager.disconnect();
+    }
+
+    public void calculateDistance(){
+        TextView distance = (TextView)findViewById(R.id.textView3);
+        if(beacon==null)
+            distance.setText("Not near a beacon");
+        else
+            distance.setText("Approximately " + ((int)(Utils.computeAccuracy(beacon) * 100) / 100.0) + " meters from the beacon.");
     }
 
     public String getUsername(){
