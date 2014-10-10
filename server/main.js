@@ -1,5 +1,5 @@
 var fs = require("fs");
-var file = "data/users.db";
+var file = "data/users.db";//if you're going to alter this, make sure a path exists
 var exists = fs.existsSync(file);
 
 var express = require('express');
@@ -9,9 +9,7 @@ var sqlite3 = require("sqlite3").verbose();
 var db = new sqlite3.Database(file);
 var estimoteUUID = "";
 
-
 db.serialize(function(){
-	// db.run("CREATE TABLE IF NOT EXISTS users (user VARCHAR(128),status INT(12),RID int(11) NOT NULL auto_increment,primary KEY (RID));");//makes our table
 	db.run("CREATE TABLE IF NOT EXISTS users (user VARCHAR(128),status INT(12));");//makes our table
 	db.run("DELETE FROM users WHERE status = -1;");
 	db.run("INSERT INTO users (status) VALUES (-1);");
@@ -80,24 +78,26 @@ api.get('/', function(req, res){
 
 
 api.get('/data/users', function(req, res){
-	var ret = "{users:[";
+	console.log("THINGS");
+	db.all("SELECT * FROM users;", function(err, all) {
 
-	db.each("SELECT * FROM users", function(err, row) {
-		if(row.status != -1){//apparently the upsert code only works if there's something already in the DB, so we'll have a thing with a val of -1
-			ret+="{'user':'" + row.user + "', 'status':" + row.status + "}";
-		}
+		console.log(all);
+		
+		ret = all.filter(function(e){
+			return e.status != -1;//only return those without a status of -1
+		});
+	
+		res.status(200);
+		res.end(JSON.stringify(ret));	
 	});
-	
-	ret += "]}";
-	
-	res.status(200);
-	res.end(ret);
 
+
+	
 });
 
-api.listen(3000);
+api.listen(8080);
 
-console.log("listening on http://localhost:3000");
+console.log("listening on http://localhost:8080");
 
 function runUpsert(user){
 

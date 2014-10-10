@@ -1,0 +1,4 @@
+# sqlite files - we want to keep the actual data folder preserved
+*
+!.gitignore
+# ignore everything but this file

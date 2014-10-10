@@ -2,10 +2,6 @@
 
 server/node_modules
 
-# sqlite files
-
-server/data
-
 # android key
 
 Tendons/keys
@@ -13,3 +9,5 @@ Tendons/keys
 #c9 folder not working :(
 
 .c9
+
+
